@@ -1,0 +1,85 @@
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+  <html>
+  <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   <title>OKPAY API PHP Test</title>
+  </head>
+  
+  <body>
+  
+  <?php
+   ini_set("display_errors", 1);
+   echo "<h1>OKPAY API PHP Test</h1>\r\n\r\n";
+   try
+   {
+       $secWord  = "secretword"; // wallet API password
+       $WalletID = "OKxxxxxxxxx"; // wallet ID
+  
+       $datePart = gmdate("Ymd");
+       $timePart = gmdate("H");
+       $authString = $secWord.":".$datePart.":".$timePart;
+  
+       echo "<p>AuthString: ".$authString."</p>";
+       $sha256 = bin2hex(mhash(MHASH_SHA256, $authString));
+       $secToken = strtoupper($sha256);
+  
+       echo "<p>Security Token: ".$secToken."</p>";
+  
+  
+       $client = new SoapClient("https://api.okpay.com/OkPayAPI?wsdl");
+  
+       echo "<pre>" . print_r($client->__getFunctions(), 1) . "</pre>";
+  
+       echo "Get current server GMT Time (Get_Date_Time)<br /><br />";
+  
+       $webService = $client->Get_Date_Time();
+  
+       $wsResult = $webService->Get_Date_TimeResult;
+       echo $wsResult ."<br />";
+  
+       echo "Get Balance for EUR currency (Wallet_Get_Currency_Balance)<br /><br />";
+       $obj->WalletID = $WalletID;
+       $obj->SecurityToken = $secToken;
+       $obj->Currency = "EUR";
+  
+       $webService1 = $client->Wallet_Get_Currency_Balance($obj);
+       $wsResult1 = $webService1->Wallet_Get_Currency_BalanceResult;
+  
+       print_r($wsResult1);
+  
+  
+       echo "Get All Balances for account (Wallet_Get_Balance)<br /><br />";
+       $obj->WalletID = $WalletID;
+       $obj->SecurityToken = $secToken;
+       $webService1 = $client->Wallet_Get_Balance($obj);
+       $wsResult1 = $webService1->Wallet_Get_BalanceResult;
+       print_r($wsResult1);
+  
+       echo "Money transfer EUR for username@gmail.com (Send_Money)<br /><br />";
+       $obj->WalletID = $WalletID;
+       $obj->SecurityToken = $secToken;
+       $obj->Currency = "EUR";
+       $obj->Receiver = "username@gmail.com";
+       $obj->Amount = 0.01;
+       $obj->Comment = "PHP API Transfer";
+       $obj->IsReceiverPaysFees = FALSE;
+       $webService1 = $client->Send_Money($obj);
+       $wsResult1 = $webService1->Send_MoneyResult;
+       print_r($wsResult1);
+  
+       echo "Get Transaction Info<br /><br />";
+       $obj->WalletID = $WalletID;
+       $obj->SecurityToken = $secToken;
+       $obj->TxnID = "123456789";
+       $webService3 = $client->Transaction_Get($obj);
+       $wsResult3 = $webService3->Transaction_GetResult;
+         print_r($wsResult3);
+  
+   }
+   catch (Exception $e)
+   {
+       print  "Caught exception: ".  $e->getMessage(). "\n";
+   }
+  ?>
+ </body>
+ </html>
