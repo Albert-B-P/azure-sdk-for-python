@@ -1,0 +1,57 @@
+
+Add Service Reference to your C# project (https://api.okpay.com/OkPayAPI)
+  
+ class Program
+  {
+   static void Main(string[] args)
+   {
+    //API Access Information
+    string codeword = "codeword";
+    string walletID = "OKxxxxxxxxx";
+    //Generating Security Token
+    string securityToken = HashStringSHA256(codeword + DateTime.UtcNow.ToString(":yyyyMMdd:HH"));
+  
+    //Creating proxy client
+    using (var proxy = new OkPayAPI.I_OkPayAPIClient())
+    {
+     //Get server time
+     Console.WriteLine(proxy.Get_Date_Time());
+  
+     //Get Balance
+     foreach (var item in proxy.Wallet_Get_Balance(walletID, securityToken))
+     {
+      Console.WriteLine(item.Currency + ": " + item.Amount.ToString("0.00"));
+     }
+  
+  
+  
+     //Get Transaction Info
+     var TI = proxy.Transaction_Get(walletID, securityToken, 123456789);
+  
+     Console.WriteLine(TI.OperationName + " " + TI.Amount.ToString("0.00") + TI.Currency);
+  
+  
+     //Send Money
+     var OI = proxy.Send_Money(walletID, securityToken, "test@okpay.com", "EUR", 0.02M, "My API Payment", true);
+     Console.WriteLine("OperationID: " + OI.ToString());
+  
+  
+    }
+    Console.ReadLine();
+   }
+  
+   //Calculating Hash
+   static string HashStringSHA256(string Value)
+   {
+    System.Security.Cryptography.SHA256CryptoServiceProvider x = new System.Security.Cryptography.SHA256CryptoServiceProvider();
+    byte[] data = System.Text.Encoding.ASCII.GetBytes(Value);
+    data = x.ComputeHash(data);
+    return BitConverter.ToString(data).Replace("-", "");
+   }
+  }
+ 
+
+
+
+
+Sample in Visual 
