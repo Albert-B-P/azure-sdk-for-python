@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+ # -*- encoding: utf-8 -*-
+  
+ from suds.client import Client
+ from suds import WebFault
+ import datetime
+ from hashlib import sha256
+  
+  
+ class OkPayAPI():
+  
+     def __init__(self, api_password=None, wallet_id=None):
+         ''' Set up your API Access Information
+             https://www.okpay.com/en/developers/interfaces/setup.html '''
+         if api_password == None:
+             self.api_password = "your details here"
+         else:
+             self.api_password = api_password
+         if wallet_id == None:
+             self.wallet_id = "your details here"
+         else:
+             self.wallet_id = wallet_id
+  
+         #Generate Security Token
+         concatenated = api_password + datetime.datetime.utcnow().strftime(":%Y%m%d:%H")
+         self.security_token = sha256(concatenated).hexdigest()
+         #Create proxy client
+         self.client = Client('https://api.okpay.com/OkPayAPI?singleWsdl')
+  
+     def get_date_time(self):
+         ''' Get the server time in UTC.
+             Params: None
+             Returns: String value - Date (YYYY-MM-DD HH:mm:SS)
+                     2010-12-31 10:33:44 '''
+         return self.client.service.Get_Date_Time()
+  
+     def get_balance(self, currency=None):
+         ''' Get the balance of all currency wallets or of a single currency.
+             Params: currency is a three-letter code from the list at
+                         https://www.okpay.com/en/developers/currency-codes.html
+                         if no currency is passed then all wallet balances are
+                         returned.
+             Returns: dictionary in the form {'balance': {'CUR': '0.0', ...}} '''
+         try:
+             if not currency == None:
+                 response = self.client.service.Wallet_Get_Currency_Balance(
+                             self.wallet_id, self.security_token,
+                             currency)
+                 balance = {response.Currency: response.Amount}
+             else:
+                 response = self.client.service.Wallet_Get_Balance(
+                         self.wallet_id, self.security_token)
+                 balance = {item.Currency: item.Amount for item in response.Balance}
+             response = {'success': 1, 'balance': balance}
+         except WebFault, e:
+             response = {'success': 0, 'error': e}
+  
+         return response
